@@ -9,7 +9,12 @@ import (
 
 func HandleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update, command string, args string) {
 	if command == "GetCoins" {
-		binanceRequests.GetCoins()
+		response := binanceRequests.GetCoins(args)
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, response)
+		_, err := bot.Send(msg)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
