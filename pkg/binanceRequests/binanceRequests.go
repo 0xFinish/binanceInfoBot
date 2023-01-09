@@ -2,7 +2,6 @@ package binanceRequests
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -19,8 +18,11 @@ func GetCoins(args string) (CoinInfoReturn string) {
 	}
 	for _, val := range res {
 		if val.Coin == strings.ToUpper(args) {
-			CoinInfo, _ := json.Marshal(val)
-			CoinInfoReturn = string(CoinInfo)
+			var CoinInfo []string
+			for _, networkVal := range val.NetworkList {
+				CoinInfo = append(CoinInfo, networkVal.Network)
+			}
+			CoinInfoReturn = strings.Join(CoinInfo, " ")
 		}
 	}
 	if CoinInfoReturn == "" {
