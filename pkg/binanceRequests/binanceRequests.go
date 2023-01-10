@@ -3,7 +3,9 @@ package binanceRequests
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/adshao/go-binance/v2"
@@ -16,7 +18,20 @@ func init() {
 }
 
 func GetCoins(args string) (CoinInfoReturn string) {
+	var tickerPrice string
 	res, err := client.NewGetAllCoinsInfoService().Do(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	prices, err := client.NewListPricesService().Do(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, p := range prices {
+		if p.Symbol == strings.ToUpper(args)+"BUSD" {
+			tickerPrice = p.Price
+		}
+	}
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -25,7 +40,7 @@ func GetCoins(args string) (CoinInfoReturn string) {
 		if val.Coin == strings.ToUpper(args) {
 			var CoinInfo string
 			for _, networkVal := range val.NetworkList {
-				CoinInfo = fmt.Sprintf("%s \n %s: with %s, dep %s, fee %s", CoinInfo, networkVal.Network, returnEmoji(networkVal.WithdrawEnable), returnEmoji(networkVal.DepositEnable), networkVal.WithdrawFee)
+				CoinInfo = fmt.Sprintf("%s \n %s: with %s, dep %s, fee %s(%f$)", CoinInfo, networkVal.Network, returnEmoji(networkVal.WithdrawEnable), returnEmoji(networkVal.DepositEnable), networkVal.WithdrawFee, countPriceDollars(networkVal.WithdrawFee, tickerPrice))
 			}
 			CoinInfoReturn = CoinInfo
 		}
@@ -70,4 +85,16 @@ func returnEmoji(boolValue bool) string {
 		return "✅"
 	}
 	return "❌"
+}
+
+func countPriceDollars(amount string, price string) float64 {
+	amountInt, err := strconv.ParseFloat(amount, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+	priceInt, err := strconv.ParseFloat(price, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return amountInt * priceInt
 }
